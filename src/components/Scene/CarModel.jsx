@@ -79,17 +79,20 @@ export default function CarModel() {
     group.current.position.y = Math.sin(state.clock.elapsedTime * 0.8) * 0.01;
   });
 
-  const halfTrack = 0.92;
-  const axleFront = 1.5;
-  const axleRear = -1.55;
-  const wheelY = wheel.radius + 0.12;
+  // ---- Stance: shrink the oversized wheels to suit the body ----
+  const wheelScale = 0.78;                   // master stance knob (0.72 small -> 0.85 filled)
+  const tyreOuter = wheel.radius + 0.12;
+  const wheelY = wheelScale * tyreOuter;     // keeps the tyre on the ground
+  const halfTrack = 0.86;                    // tuck wheels just under the fenders
+  const axleFront = 1.45;
+  const axleRear = -1.5;
   const sideZ = bodyWidth / 2;
   const roofColor = hasCarbonRoof ? '#15161a' : paint.hex;
   const bodyColor = paint.hex;
 
   // A- and C-pillar transforms (frame the side windows).
   const pillars = [
-    { pos: [0.75, 1.015, 0], rot: 0.986, len: 0.6 },   // A-pillar
+    { pos: [0.75, 1.015, 0], rot: 0.986, len: 0.6 },    // A-pillar
     { pos: [-1.025, 1.03, 0], rot: -1.146, len: 0.82 }, // C-pillar
   ];
 
@@ -109,12 +112,12 @@ export default function CarModel() {
         {/* Seats */}
         {[0.1, -0.5].map((x) => (
           <mesh key={`seat-${x}`} position={[x, 0.82, 0]}>
-            <boxGeometry args={[0.3, 0.32, 1.0]} />
+            <boxGeometry args={[0.2, 0.45, 1.45]} />
             <meshStandardMaterial color={trim.accent} roughness={0.85} />
           </mesh>
         ))}
 
-        {/* ---- Glass canopy (now visible) ---- */}
+        {/* ---- Glass canopy ---- */}
         <mesh geometry={glassGeo}>
           <meshPhysicalMaterial
             color="#0b0f14" metalness={0.1} roughness={0.04}
@@ -136,10 +139,10 @@ export default function CarModel() {
         )}
 
         {/* ---- Rocker / sill panels ---- */}
-        {[sideZ + 0.005, -sideZ - 0.005].map((z) => (
-          <mesh key={`sill-${z}`} position={[0, 0.32, z]}>
-            <boxGeometry args={[3.7, 0.14, 0.06]} />
-            <meshStandardMaterial color="#0c0c0e" roughness={0.7} />
+        {[sideZ + 0.001, -sideZ - 0.002].map((z) => (
+          <mesh key={`sill-${z}`} position={[0.01, 0.30, z]}>
+            <boxGeometry args={[4.80, 0.21, 0.2]} />
+            <meshStandardMaterial color="#0d0d0e" roughness={2} />
           </mesh>
         ))}
 
@@ -147,25 +150,25 @@ export default function CarModel() {
         {[sideZ + 0.002, -sideZ - 0.002].map((z) =>
           [0.95, -0.2, -1.2].map((x) => (
             <mesh key={`door-${x}-${z}`} position={[x, 0.6, z]}>
-              <boxGeometry args={[0.015, 0.5, 0.02]} />
-              <meshStandardMaterial color="#0a0a0c" roughness={0.6} />
+              <boxGeometry args={[0.025, 0.65, 0.2]} />
+              <meshStandardMaterial color="#0a0a0c" roughness={0.10} />
             </mesh>
           ))
         )}
         {[sideZ + 0.015, -sideZ - 0.015].map((z) =>
           [0.45, -0.75].map((x) => (
-            <mesh key={`handle-${x}-${z}`} position={[x, 0.78, z]}>
-              <boxGeometry args={[0.14, 0.04, 0.03]} />
-              <meshStandardMaterial color="#1a1a1d" metalness={0.6} roughness={0.4} />
+            <mesh key={`handle-${x}-${z}`} position={[x, 0.80, z]}>
+              <boxGeometry args={[0.3, 0.02, 0.2]} />
+              <meshStandardMaterial color="#1a1a1d" metalness={0.60} roughness={0.4} />
             </mesh>
           ))
         )}
 
-        {/* ---- Fender arches ---- */}
+        {/* ---- Fender arches (aligned to wheels, sized to the smaller tyre) ---- */}
         {[axleFront, axleRear].map((axleX) =>
-          [sideZ + 0.01, -sideZ - 0.01].map((z) => (
-            <mesh key={`arch-${axleX}-${z}`} position={[axleX, wheelY, z]}>
-              <torusGeometry args={[wheel.radius + 0.14, 0.07, 12, 28, Math.PI]} />
+          [halfTrack, -halfTrack].map((z) => (
+            <mesh key={`arch-${axleX}-${z}`} position={[axleX, wheelY + 0.03, z]}>
+              <torusGeometry args={[wheelY * 1.20, 0.01, 16, 28, Math.PI]} />
               <meshStandardMaterial color="#0c0c0e" roughness={0.85} />
             </mesh>
           ))
@@ -173,19 +176,19 @@ export default function CarModel() {
 
         {/* ---- Front: kidney grille + lower intake ---- */}
         {[0.18, -0.18].map((z) => (
-          <mesh key={`grille-${z}`} position={[2.44, 0.56, z]}>
-            <boxGeometry args={[0.06, 0.3, 0.26]} />
+          <mesh key={`grille-${z}`} position={[2.54, 0.64, z]}>
+            <boxGeometry args={[0.04, 0.3, 0.30]} />
             <meshStandardMaterial color="#101012" metalness={0.6} roughness={0.5} />
           </mesh>
         ))}
-        <mesh position={[2.42, 0.4, 0]}>
-          <boxGeometry args={[0.08, 0.14, 1.4]} />
+        <mesh position={[2.45, 0.3, 0]}>
+          <boxGeometry args={[0.16, 0.20, 2]} />
           <meshStandardMaterial color="#08080a" roughness={0.7} />
         </mesh>
 
         {/* ---- Headlights (proud of the nose) ---- */}
         {[0.62, -0.62].map((z) => (
-          <group key={`hl-${z}`} position={[2.44, 0.62, z]}>
+          <group key={`hl-${z}`} position={[2.50, 0.60, z]}>
             <mesh>
               <boxGeometry args={[0.1, 0.14, 0.42]} />
               <meshStandardMaterial color="#15161a" roughness={0.4} />
@@ -198,13 +201,13 @@ export default function CarModel() {
         ))}
 
         {/* ---- Rear: tail-light bar + units (proud of the tail) ---- */}
-        <mesh position={[-2.43, 0.64, 0]}>
-          <boxGeometry args={[0.05, 0.12, 1.42]} />
-          <meshStandardMaterial color="#5a0e0e" emissive="#ff1a1a" emissiveIntensity={1.5} toneMapped={false} />
+        <mesh position={[-2.43, 0.45, 0]}>
+          <boxGeometry args={[0.25, 0.10, 2]} />
+          <meshStandardMaterial color="#070707" emissive="#000000" emissiveIntensity={2} toneMapped={false} />
         </mesh>
         {[0.6, -0.6].map((z) => (
           <mesh key={`tl-${z}`} position={[-2.45, 0.64, z]}>
-            <boxGeometry args={[0.04, 0.14, 0.4]} />
+            <boxGeometry args={[0.15, 0.14, 0.65]} />
             <meshStandardMaterial color="#ff2b2b" emissive="#ff1010" emissiveIntensity={2.2} toneMapped={false} />
           </mesh>
         ))}
@@ -212,15 +215,15 @@ export default function CarModel() {
         {/* ---- Exhaust tips ---- */}
         {[0.45, -0.45].map((z) => (
           <mesh key={`exh-${z}`} position={[-2.42, 0.3, z]} rotation={[0, 0, Math.PI / 2]}>
-            <cylinderGeometry args={[0.06, 0.06, 0.12, 16]} />
+            <cylinderGeometry args={[0.06, 0.07, 0.350, 25]} />
             <meshStandardMaterial color="#9a9da2" metalness={0.95} roughness={0.3} />
           </mesh>
         ))}
 
         {/* M Sport rear spoiler (package) */}
         {hasMSport && (
-          <mesh position={[-1.95, 1.0, 0]} castShadow>
-            <boxGeometry args={[0.4, 0.05, 1.5]} />
+          <mesh position={[-2.30, 1.0, 0]} castShadow>
+            <boxGeometry args={[0.8, 0.10, 1.9]} />
             <meshPhysicalMaterial color={roofColor} {...matProps} />
           </mesh>
         )}
@@ -239,14 +242,14 @@ export default function CarModel() {
           </group>
         ))}
 
-        {/* ---- Wheels ---- */}
+        {/* ---- Wheels (scaled to fit, synced, keyed for the swap pop) ---- */}
         {[
           ['fl', axleFront, halfTrack],
           ['fr', axleFront, -halfTrack],
           ['rl', axleRear, halfTrack],
           ['rr', axleRear, -halfTrack],
         ].map(([corner, axleX, z]) => (
-          <group key={`${corner}-${wheel.id}`} position={[axleX, wheelY, z]} rotation={[0, Math.PI / 2, 0]}>
+          <group key={`${corner}-${wheel.id}`} position={[axleX, wheelY, z]} rotation={[0, Math.PI / 2, 0]} scale={wheelScale}>
             <Wheel wheel={wheel} position={[0, 0, 0]} />
           </group>
         ))}
