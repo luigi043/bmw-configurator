@@ -8,7 +8,7 @@ Built as a focused showcase of automotive-grade frontend work: real-time 3D, mot
 
 ## Preview
 
-![Drive Studio configurator](docs/preview.png)
+![Drive Studio configurator](docs/image.png)
 
 > UI preview. Run `npm run dev` for the live 3D scene — feel free to replace this with a real screenshot once it's running.
 
