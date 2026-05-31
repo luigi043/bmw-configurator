@@ -2,13 +2,11 @@ import { useMemo, useRef, useEffect } from 'react';
 import gsap from 'gsap';
 
 /**
- * A procedurally generated wheel: tyre, rim barrel, spokes, hub, brake rotor
- * and a coloured caliper. Spoke count and radius come from the selected wheel
- * option, so changing wheels rebuilds the geometry. GSAP gives each swap a
- * quick "pop" so the change feels tactile.
- *
- * Local axle is along X; the parent rotates the group so it points across the
- * car's track.
+ * Procedurally generated wheel: tyre, sidewall, brake rotor + caliper,
+ * polished rim lip, dished barrel, face plate, radiating spokes and hub cap.
+ * Spoke count and radius come from the selected wheel option. GSAP gives each
+ * swap a quick "pop". All parts share the axle-Y convention; the group's
+ * rotation orients the whole wheel.
  */
 export default function Wheel({ position, wheel }) {
   const group = useRef();
@@ -31,42 +29,78 @@ export default function Wheel({ position, wheel }) {
 
   return (
     <group ref={group} position={position} rotation={[0, 0, Math.PI / 2]}>
-      {/* Tyre  */}
+      {/* Tyre */}
       <mesh castShadow rotation={[Math.PI / 2, 0, 0]}>
-  <torusGeometry args={[r, 0.12, 24, 48]} />
-  <meshStandardMaterial color="#000000" roughness={0.9} />
-</mesh>
+        <torusGeometry args={[r, 0.12, 24, 48]} />
+        <meshStandardMaterial color="#141416" roughness={0.92} />
+      </mesh>
+
       {/* Tyre sidewall / inner */}
       <mesh>
         <cylinderGeometry args={[r, r, 0.24, 40]} />
-        <meshStandardMaterial color="#dfcfcf" roughness={0.95} />
+        <meshStandardMaterial color="#1d1d1f" roughness={0.95} />
       </mesh>
+
       {/* Brake rotor */}
       <mesh>
-        <cylinderGeometry args={[r * 0.7, r * 0.78, 0.05, 32]} />
-        <meshStandardMaterial color="#ff0000" metalness={0.9} roughness={0.4} />
+        <cylinderGeometry args={[r * 0.68, r * 0.68, 0.05, 36]} />
+        <meshStandardMaterial color="#8a8d92" metalness={0.95} roughness={0.45} />
       </mesh>
-      {/* Brake caliper (colour accent) */}
-      <mesh position={[0.06, r * 0.42, 0]}>
-        <boxGeometry args={[0.12, r * 0.34, 0.14]} />
-        <meshStandardMaterial color="#e9d205" metalness={0.3} roughness={0.5} />
+
+      {/* Brake caliper — straddles the rotor edge (note: 3 numbers in position!) */}
+      <mesh position={[0.06, r * 0.55, 0]}>
+        <boxGeometry args={[0.08, r * 0.34, 0.18]} />
+        <meshStandardMaterial color="#1d6fe0" metalness={0.5} roughness={0.45} />
       </mesh>
-      {/* Rim barrel */}
+
+      {/* Rim outer lip (polished ring) */}
+      <mesh rotation={[Math.PI / 2, 0, 0]}>
+        <torusGeometry args={[r * 0.8, 0.07, 18, 44]} />
+        <meshStandardMaterial color="#e2e5e9" metalness={1} roughness={0.12} />
+      </mesh>
+
+      {/* Rim barrel / dish — concave: wide at the face (0.78) -> narrow inboard (0.5) */}
       <mesh>
-        <cylinderGeometry args={[r * 0.96, r * 0.96, 0.2, 40]} />
-        <meshStandardMaterial color="#f000f0" metalness={0.95} roughness={0.22} />
+        <cylinderGeometry args={[r * 0.78, r * 0.5, 0.28, 44]} />
+        <meshStandardMaterial color="#a9adb3" metalness={0.95} roughness={0.28} />
       </mesh>
-      {/* Spokes */}
+
+      {/* Rim face plate behind the spokes */}
+      <mesh position={[0, 0.04, 0]}>
+        <cylinderGeometry args={[r * 0.72, r * 0.72, 0.05, 44]} />
+        <meshStandardMaterial color="#bcc0c6" metalness={0.95} roughness={0.2} />
+      </mesh>
+
+      {/* Spokes — lifted onto the outer face, tapered hub -> rim */}
       {spokeAngles.map((a, i) => (
-        <mesh key={i} rotation={[0, a, 0]}>
-          <boxGeometry args={[r * 0.14, 0.18, r * 1.42]} />
-          <meshStandardMaterial color="#e91728" metalness={0.95} roughness={0.18} />
-        </mesh>
+        <group key={i} rotation={[0, a, 0]}>
+          <mesh position={[0, 0.07, r * 0.45]}>
+            <boxGeometry args={[r * 0.1, 0.07, r * 0.62]} />
+            <meshStandardMaterial color="#d7dbe0" metalness={1} roughness={0.16} />
+          </mesh>
+        </group>
       ))}
+
+      {/* Lug nuts */}
+      {Array.from({ length: 5 }, (_, i) => (i / 5) * Math.PI * 2).map((a, i) => (
+        <group key={`lug-${i}`} rotation={[0, a, 0]}>
+          <mesh position={[0, 0.1, r * 0.2]}>
+            <cylinderGeometry args={[0.022, 0.022, 0.05, 6]} />
+            <meshStandardMaterial color="#3a3d42" metalness={0.8} roughness={0.4} />
+          </mesh>
+        </group>
+      ))}
+
       {/* Hub cap */}
-      <mesh>
-        <cylinderGeometry args={[r * .26, r * 0.26, 0.36, 24]} />
-        <meshStandardMaterial color="#2daf5f" metalness={0.8} roughness={0.3} />
+      <mesh position={[0, 0.08, 0]}>
+        <cylinderGeometry args={[r * 0.2, r * 0.2, 0.1, 28]} />
+        <meshStandardMaterial color="#26282c" metalness={0.85} roughness={0.3} />
+      </mesh>
+
+      {/* Centre emblem */}
+      <mesh position={[0, 0.12, 0]}>
+        <cylinderGeometry args={[r * 0.1, r * 0.1, 0.06, 24]} />
+        <meshStandardMaterial color="#1d6fe0" emissive="#0a3a7a" emissiveIntensity={0.4} metalness={0.6} roughness={0.4} />
       </mesh>
     </group>
   );

@@ -6,19 +6,21 @@ import { useConfigurator } from '../../store/useConfigurator.js';
 import { PAINTS } from '../../data/carConfig.js';
 
 /**
- * Drop a real car here:
- *   1. Convert any LICENSED model to glTF/GLB (Blender + Sollumz, or gltf-transform).
- *   2. Save it as  public/models/car.glb
- *   3. In CarScene.jsx, render <GltfCar /> instead of <CarModel />.
+ * Loads a real .glb car, auto-centres + scales it onto the ground, and falls
+ * back to the procedural car if the file is missing.
  *
- * If the file is missing or fails to load, this component automatically
- * falls back to the procedural sedan — the app never hard-crashes.
+ * Setup:
+ *   1. Download the model as glTF/GLB and save it as  public/models/car.glb
+ *   2. CarScene already renders <GltfCar /> (see that file).
  *
- * NOTE: live paint recolouring only works if the model's paint mesh/material
- * is named. Set PAINT_MATERIAL_NAME to match your model (inspect it with
- * `npx @gltf-transform/cli inspect car.glb`).
+ * RECOLOR: an art car (like the XTAON livery) has its own textures, so leave
+ * this false to show it as-is. Set true only for a plain model whose paint
+ * material you name in PAINT_MATERIAL_NAME.
  */
 const MODEL_URL = '/models/car.glb';
+const TARGET_LENGTH = 4.6;   // metres along the longest axis after scaling
+const ROT_Y_DEG = 0;         // spin the model if it faces the wrong way (try 90/180/-90)
+const RECOLOR = false;
 const PAINT_MATERIAL_NAME = 'CarPaint';
 
 function GltfCarInner() {
@@ -26,15 +28,28 @@ function GltfCarInner() {
   const paintId = useConfigurator((s) => s.paintId);
   const paint = PAINTS.find((p) => p.id === paintId);
 
-  // Clone so HMR / multiple mounts don't mutate the cached original.
-  const model = useMemo(() => scene.clone(true), [scene]);
+  // Clone, apply heading, then measure for a center/scale/ground fit.
+  const { model, fit } = useMemo(() => {
+    const m = scene.clone(true);
+    m.rotation.y = THREE.MathUtils.degToRad(ROT_Y_DEG);
+    m.updateMatrixWorld(true);
+
+    const box = new THREE.Box3().setFromObject(m);
+    const size = new THREE.Vector3(); box.getSize(size);
+    const center = new THREE.Vector3(); box.getCenter(center);
+    const scale = TARGET_LENGTH / Math.max(size.x, size.y, size.z);
+    return {
+      model: m,
+      fit: { scale, position: [-center.x * scale, -box.min.y * scale, -center.z * scale] },
+    };
+  }, [scene]);
 
   useEffect(() => {
     model.traverse((o) => {
       if (!o.isMesh) return;
       o.castShadow = true;
       o.receiveShadow = true;
-      if (o.material?.name === PAINT_MATERIAL_NAME) {
+      if (RECOLOR && o.material?.name === PAINT_MATERIAL_NAME) {
         o.material = o.material.clone();
         o.material.color = new THREE.Color(paint.hex);
         o.material.metalness = paint.finish === 'metallic' ? 0.9 : paint.finish === 'matte' ? 0.1 : 0.5;
@@ -44,26 +59,22 @@ function GltfCarInner() {
     });
   }, [model, paint]);
 
-  return <primitive object={model} />;
+  return (
+    <group scale={fit.scale} position={fit.position}>
+      <primitive object={model} />
+    </group>
+  );
 }
 
-// Catches a failed glTF load and renders the procedural car instead.
+// Renders the procedural car if the .glb fails to load.
 class ModelBoundary extends Component {
-  constructor(props) {
-    super(props);
-    this.state = { failed: false };
-  }
-  static getDerivedStateFromError() {
-    return { failed: true };
-  }
+  constructor(props) { super(props); this.state = { failed: false }; }
+  static getDerivedStateFromError() { return { failed: true }; }
   componentDidCatch(err) {
     // eslint-disable-next-line no-console
     console.warn(`[GltfCar] "${MODEL_URL}" not loaded — using procedural model.`, err?.message);
   }
-  render() {
-    if (this.state.failed) return <CarModel />;
-    return this.props.children;
-  }
+  render() { return this.state.failed ? <CarModel /> : this.props.children; }
 }
 
 export default function GltfCar() {

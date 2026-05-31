@@ -6,7 +6,7 @@ import Ground from './Ground.jsx';
 import CarModel from './CarModel.jsx'; // detailed procedural car (active)
 // Alternatives kept in the repo: ObjCar.jsx (uploaded OBJ) and GltfCar.jsx (.glb loader).
 import CameraRig from './CameraRig.jsx';
-
+import GltfCar from './GltfCar.jsx';
 /**
  * The WebGL root. PerformanceMonitor + AdaptiveDpr automatically drop the
  * pixel ratio on weaker GPUs so the frame rate stays smooth — visuals scale
@@ -33,6 +33,7 @@ export default function CarScene() {
 
         <Lighting />
         <CarModel />
+        <GltfCar />    
         <Ground />
         <CameraRig />
       </Canvas>
