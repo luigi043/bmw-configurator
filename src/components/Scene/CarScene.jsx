@@ -3,7 +3,8 @@ import { AdaptiveDpr, PerformanceMonitor } from '@react-three/drei';
 import { useState } from 'react';
 import Lighting from './Lighting.jsx';
 import Ground from './Ground.jsx';
-import ObjCar from './ObjCar.jsx'; // real OBJ model (falls back to procedural CarModel)
+import CarModel from './CarModel.jsx'; // detailed procedural car (active)
+// Alternatives kept in the repo: ObjCar.jsx (uploaded OBJ) and GltfCar.jsx (.glb loader).
 import CameraRig from './CameraRig.jsx';
 
 /**
@@ -31,7 +32,7 @@ export default function CarScene() {
         <fog attach="fog" args={['#0a0a0c', 14, 26]} />
 
         <Lighting />
-        <ObjCar />
+        <CarModel />
         <Ground />
         <CameraRig />
       </Canvas>
